@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc
 df = pd.read_csv("BSCS_Course_Schedule.csv")
 df["Timings"] = df["Timings"].ffill()
 
-# Format course info (use Markdown-style line breaks)
+# Format course info
 def format_course_info(course, program, room, classno, teacher):
     return f"**{course}** ({program})  \n{room}, Class#: {classno}  \nInstructor: {teacher}"
 
@@ -36,7 +36,7 @@ for _, row in df.iterrows():
                 row["FriSat_Room"], row["FriSat_ClassNo"], row["FriSat_Teacher"]
             )))
 
-# Get time options
+# Get unique time options
 time_options = sorted({t for day in schedule.values() for t, _ in day if pd.notna(t)})
 
 # Dash App
@@ -56,7 +56,17 @@ app.layout = dbc.Container([
                 placeholder="Select a time slot...",
                 clearable=True
             )
-        ], width=6)
+        ], width=4),
+        dbc.Col([
+            html.Label("🔍 Search", className="fw-bold"),
+            dcc.Input(
+                id="search-input",
+                type="text",
+                placeholder="Search course, teacher, room...",
+                debounce=False,  # ✅ Live sync as you type
+                className="form-control"
+            )
+        ], width=8)
     ], className="mb-4"),
 
     # Calendar display
@@ -78,16 +88,23 @@ def generate_day_column(day, courses):
         ])
     ], style={"minWidth": "200px"})
 
-# Callback for filtering
+# Callback with both filters
 @app.callback(
     Output("calendar-view", "children"),
-    Input("time-filter", "value")
+    Input("time-filter", "value"),
+    Input("search-input", "value")
 )
-def update_calendar(selected_time):
+def update_calendar(selected_time, search_text):
+    search_text = (search_text or "").lower()
+
     filtered = {
-        day: [(t, info) for t, info in schedule[day] if not selected_time or t == selected_time]
+        day: [
+            (t, info) for t, info in schedule[day]
+            if (not selected_time or t == selected_time) and (search_text in info.lower())
+        ]
         for day in days
     }
+
     return [generate_day_column(day, filtered[day]) for day in days]
 
 # Run
