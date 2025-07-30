@@ -98,9 +98,3 @@ pip install -r requirements.txt
   `time.sleep(600)` → value in seconds
 
 ---
-
-## 🙌 Credits
-
-Created by [Your Name] — powered by [Dash](https://dash.plotly.com/), [Pandas](https://pandas.pydata.org/), and Google Sheets.
-
----
